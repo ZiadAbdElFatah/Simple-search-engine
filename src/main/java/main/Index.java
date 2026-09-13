@@ -23,4 +23,10 @@ public class Index {
         }
         return termPostings;
     }
+
+    public List<Integer> getDocuments(String token) {
+        return getPostings(token).stream()
+                .map(Posting::getDocId)
+                .toList();
+    }
 }
