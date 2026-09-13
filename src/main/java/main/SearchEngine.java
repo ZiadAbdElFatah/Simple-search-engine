@@ -1,4 +1,4 @@
-package main.java;
+package main;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -15,7 +15,7 @@ public class SearchEngine {
     private int docId = 0;
 
     private final Map<Integer, Document> documents = new HashMap<>();
-    private final main.java.Index index = new main.java.Index();
+    private final Index index = new Index();
     private static final Logger LOGGER = LoggerFactory.getLogger(SearchEngine.class);
 
     private List<Path> loadDirectory(Path folder) throws IOException {
@@ -33,7 +33,7 @@ public class SearchEngine {
             } catch (IOException e) {
                 LOGGER.error("Error reading file: " + file, e);
             }
-            main.java.Tokenizer tokenizer = new main.java.Tokenizer();
+            Tokenizer tokenizer = new Tokenizer();
             List<String> tokens = tokenizer.tokenize(fileContent);
             for (int i = 0; i < tokens.size(); i++) {
                 String term = tokens.get(i);
