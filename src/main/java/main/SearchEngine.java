@@ -9,6 +9,9 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Stream;
 
+/// SearchEngine class that provides methods to index documents and search for terms in the indexed documents.
+///
+/// It uses the [Tokenizer] class to tokenize input strings, the [Index] class to maintain an inverted index of terms and their corresponding postings, and the [Document] class to represent documents in the search engine.
 public class SearchEngine {
     private int docId = 0;
 
@@ -18,11 +21,16 @@ public class SearchEngine {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SearchEngine.class);
 
+    /// Indexes all the files in the given folder and its subfolders.
     public void indexDirectory(Path folder) throws IOException {
         List<Path> files = loadDirectory(folder);
         index(files);
     }
 
+    /// Searches for documents that contain the given query string.
+    ///
+    /// @param query the query string to search for
+    /// @return a set of documents that contain the query string, used set to avoid duplicates
     public Set<Document> search(String query) {
         List<String> tokens = tokenizer.tokenize(query);
         Set<Document> results = new HashSet<>();
@@ -40,6 +48,9 @@ public class SearchEngine {
         }
     }
 
+    /// Indexes the given list of files by reading their content, tokenizing it, adding the terms to the inverted index, and auto incrementing the document ID.
+    ///
+    /// If a file cannot be read, it logs an error and continues with the next file.
     private void index(List<Path> files) {
         for (Path file : files) {
             String fileContent = "";

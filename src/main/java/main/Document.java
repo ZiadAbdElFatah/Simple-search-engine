@@ -3,6 +3,9 @@ package main;
 import java.nio.file.Path;
 import java.util.Objects;
 
+/// Document class that represents a document in the search engine.
+///
+/// A document consists of a unique document ID, a file name, and a file path to let users access the documents in the search results.
 public class Document {
     private final int docId;
     private final String fileName;
