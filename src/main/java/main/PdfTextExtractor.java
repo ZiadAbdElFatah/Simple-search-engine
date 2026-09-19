@@ -11,7 +11,7 @@ public class PdfTextExtractor implements TextExtractor {
 
     @Override
     public boolean supports(Path file) {
-        return file.toString().endsWith(".pdf");
+        return file.toString().toLowerCase().endsWith(".pdf");
     }
 
     @Override

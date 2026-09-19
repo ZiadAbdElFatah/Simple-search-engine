@@ -7,7 +7,7 @@ import java.nio.file.Path;
 public class PlainTextExtractor implements TextExtractor {
     @Override
     public boolean supports(Path file) {
-        return file.toString().endsWith(".txt");
+        return file.toString().toLowerCase().endsWith(".txt");
     }
 
     @Override
