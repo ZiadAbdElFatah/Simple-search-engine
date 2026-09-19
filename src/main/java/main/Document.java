@@ -17,6 +17,10 @@ public class Document {
         this.filePath = filePath;
     }
 
+    public String getFileName() {
+        return fileName;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

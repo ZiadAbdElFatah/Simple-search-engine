@@ -28,4 +28,37 @@ public class SearchEngineTest {
         List<String> actualFileNames = actualResults.stream().map(Document::toString).toList();
         Assert.assertEquals(actualFileNames, List.of("file1.txt", "file2.txt"));
     }
+
+    @Test
+    public void unsupportedFileTypeIsSkipped() throws IOException {
+        final SearchEngine searchEngine = new SearchEngine();
+        Path tempDirectory = Files.createTempDirectory("test");
+
+        Files.writeString(tempDirectory.resolve("notes.txt"), "this is a searchable document");
+        Files.writeString(tempDirectory.resolve("image.jpg"), "not real jpg bytes, irrelevant for this test");
+
+        searchEngine.indexDirectory(tempDirectory);
+        List<Document> actualResults = searchEngine.search("searchable");
+
+        List<String> actualFileNames = actualResults.stream().map(Document::getFileName).toList();
+        Assert.assertEquals(actualFileNames, List.of("notes.txt"));
+    }
+
+    @Test
+    public void unsupportedFileDoesNotCorruptSubsequentDocIds() throws IOException {
+        final SearchEngine searchEngine = new SearchEngine();
+        Path tempDirectory = Files.createTempDirectory("test");
+
+        Files.writeString(tempDirectory.resolve("image.jpg"), "irrelevant bytes");
+        Files.writeString(tempDirectory.resolve("first.txt"), "apple");
+        Files.writeString(tempDirectory.resolve("second.txt"), "banana");
+
+        searchEngine.indexDirectory(tempDirectory);
+
+        List<String> appleResults = searchEngine.search("apple").stream().map(Document::getFileName).toList();
+        List<String> bananaResults = searchEngine.search("banana").stream().map(Document::getFileName).toList();
+
+        Assert.assertEquals(appleResults, List.of("first.txt"));
+        Assert.assertEquals(bananaResults, List.of("second.txt"));
+    }
 }
