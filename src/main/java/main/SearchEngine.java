@@ -18,6 +18,7 @@ public class SearchEngine {
     private final Map<Integer, Document> documents = new HashMap<>();
     private final Index index = new Index();
     private final Tokenizer tokenizer = new Tokenizer();
+    private final List<TextExtractor> extractors = List.of(new PdfTextExtractor(), new PlainTextExtractor());
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SearchEngine.class);
 
@@ -53,9 +54,13 @@ public class SearchEngine {
     /// If a file cannot be read, it logs an error and continues with the next file.
     private void index(List<Path> files) {
         for (Path file : files) {
+            TextExtractor extractor = findExecutor(file);
+            if (extractor == null) {
+                continue;
+            }
             String fileContent;
             try {
-                fileContent = Files.readString(file);
+                fileContent = extractor.extractText(file);
             } catch (IOException e) {
                 LOGGER.error("Error reading file: " + file, e);
                 continue;
@@ -67,5 +72,15 @@ public class SearchEngine {
             }
             documents.put(docId, new Document(docId++, file.getFileName().toString(), file));
         }
+    }
+
+    private TextExtractor findExecutor(Path file) {
+        for (TextExtractor extractor : extractors) {
+            if (extractor.supports(file)) {
+                return extractor;
+            }
+        }
+        LOGGER.error("File type not supported");
+        return null;
     }
 }
