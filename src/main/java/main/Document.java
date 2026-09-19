@@ -32,6 +32,6 @@ public class Document {
 
     @Override
     public String toString() {
-        return fileName;
+        return fileName + " (" + filePath + ")";
     }
 }
