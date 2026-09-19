@@ -5,6 +5,9 @@ plugins {
 
 application {
     mainClass = 'main.Main'
+    tasks.named('run') {
+        standardInput = System.in
+    }
 }
 
 repositories {
