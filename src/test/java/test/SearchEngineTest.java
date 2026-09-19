@@ -25,7 +25,7 @@ public class SearchEngineTest {
         searchEngine.indexDirectory(tempDirectory);
         List<Document> actualResults = searchEngine.search("file 1");
 
-        List<String> actualFileNames = actualResults.stream().map(Document::getFileName).toList();
+        List<String> actualFileNames = actualResults.stream().map(Document::toString).toList();
         Assert.assertEquals(actualFileNames, List.of("file1.txt", "file2.txt"));
     }
 }
