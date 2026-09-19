@@ -1,9 +1,23 @@
 plugins {
     id 'java'
+    id 'application'
+}
+
+application {
+    mainClass = 'main.Main'
+    tasks.named('run') {
+        standardInput = System.in
+    }
 }
 
 repositories {
     mavenCentral()
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(25)
+    }
 }
 
 dependencies {

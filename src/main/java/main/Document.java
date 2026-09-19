@@ -17,18 +17,6 @@ public class Document {
         this.filePath = filePath;
     }
 
-    public int getDocId() {
-        return docId;
-    }
-
-    public String getFileName() {
-        return fileName;
-    }
-
-    public Path getFilePath() {
-        return filePath;
-    }
-
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -40,5 +28,10 @@ public class Document {
     @Override
     public int hashCode() {
         return Objects.hash(docId);
+    }
+
+    @Override
+    public String toString() {
+        return fileName;
     }
 }

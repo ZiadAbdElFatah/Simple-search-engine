@@ -30,16 +30,16 @@ public class SearchEngine {
     /// Searches for documents that contain the given query string.
     ///
     /// @param query the query string to search for
-    /// @return a set of documents that contain the query string, used set to avoid duplicates
-    public Set<Document> search(String query) {
+    /// @return a list of documents that contain the query string sorted according to TF-IDF
+    public List<Document> search(String query) {
         List<String> tokens = tokenizer.tokenize(query);
-        Set<Document> results = new HashSet<>();
-        for (String token : tokens) {
-            for (int docId : index.getDocuments(token)) {
-                results.add(documents.get(docId));
-            }
-        }
-        return results;
+        TfIdfScorer scorer = new TfIdfScorer(index, documents.size());
+        Map<Integer, Double> scores = scorer.score(tokens);
+
+        return scores.entrySet().stream()
+                .sorted(Map.Entry.<Integer, Double>comparingByValue().reversed())
+                .map(entry -> documents.get(entry.getKey()))
+                .toList();
     }
 
     private List<Path> loadDirectory(Path folder) throws IOException {
@@ -53,7 +53,7 @@ public class SearchEngine {
     /// If a file cannot be read, it logs an error and continues with the next file.
     private void index(List<Path> files) {
         for (Path file : files) {
-            String fileContent = "";
+            String fileContent;
             try {
                 fileContent = Files.readString(file);
             } catch (IOException e) {

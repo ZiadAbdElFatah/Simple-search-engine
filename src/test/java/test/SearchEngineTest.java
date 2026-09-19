@@ -8,13 +8,12 @@ import org.testng.annotations.Test;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Set;
+import java.util.List;
 
 public class SearchEngineTest {
     @Test
     public void testSearch() throws IOException {
         final SearchEngine searchEngine = new SearchEngine();
-
         Path tempDirectory = Files.createTempDirectory("test");
 
         Path file1 = tempDirectory.resolve("file1.txt");
@@ -24,8 +23,9 @@ public class SearchEngineTest {
         Files.writeString(file2, "This is the content of file 2.");
 
         searchEngine.indexDirectory(tempDirectory);
-        Set<Document> actualResults = searchEngine.search("file 1");
-        Set<Document> expectedResults = Set.of(new Document(1, "file1.txt", file1), new Document(0, "file2.txt", file2));
-        Assert.assertEquals(expectedResults, actualResults);
+        List<Document> actualResults = searchEngine.search("file 1");
+
+        List<String> actualFileNames = actualResults.stream().map(Document::toString).toList();
+        Assert.assertEquals(actualFileNames, List.of("file1.txt", "file2.txt"));
     }
 }
