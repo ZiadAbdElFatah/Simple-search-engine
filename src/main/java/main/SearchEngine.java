@@ -53,7 +53,7 @@ public class SearchEngine {
     /// If a file cannot be read, it logs an error and continues with the next file.
     private void index(List<Path> files) {
         for (Path file : files) {
-            String fileContent = "";
+            String fileContent;
             try {
                 fileContent = Files.readString(file);
             } catch (IOException e) {
