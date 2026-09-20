@@ -34,6 +34,9 @@ public class QueryParser {
                     }
                 }
             }
+            if (tokens.getLast().isEmpty()) {
+                tokens.remove(token);
+            }
         }
         return tokens;
     }
