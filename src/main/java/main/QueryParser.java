@@ -4,40 +4,74 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class QueryParser {
-    private static final String TOKEN_REGEX = "[^a-zA-Z0-9'\"]+";
+    private static final String SPLIT_REGEX = "[^a-zA-Z0-9'\"]+";
 
-    public List<String> parse(String input) {
-        List<String> tokens = new ArrayList<>();
+    public List<QueryElement> parse(String input) {
+        List<QueryElement> elements = new ArrayList<>();
+        List<String> phraseWords = new ArrayList<>();
         boolean inQuotes = false;
-        for (String token : input.split(TOKEN_REGEX)) {
-            switch (token) {
-                case "AND" -> tokens.add("AND");
-                case "OR" -> tokens.add("OR");
-                case "NOT" -> tokens.add("NOT");
-                default -> {
-                    if (token.startsWith("\"") && token.endsWith("\"") && token.length() > 1) {
-                        tokens.add(token.substring(1, token.length() - 1));
-                        continue;
-                    } else if (token.endsWith("\"")) {
-                        tokens.add(token.substring(0, token.length() - 1));
-                        inQuotes = false;
-                        continue;
-                    } else if (token.startsWith("\"")) {
-                        tokens.add(token.substring(1));
-                        inQuotes = true;
-                        continue;
-                    }
-                    if (inQuotes) {
-                        tokens.add(token);
-                    } else {
-                        tokens.add(token.toLowerCase());
+
+        for (String raw : input.split(SPLIT_REGEX)) {
+            if (raw.isEmpty()) {
+                continue;
+            }
+
+            boolean opens = !inQuotes && raw.startsWith("\"");
+            String word;
+            if (opens) {
+                word = raw.substring(1);
+            } else {
+                word = raw;
+            }
+            boolean closes = word.endsWith("\"");
+            if (closes) {
+                word = word.substring(0, word.length() - 1);
+            }
+
+            if (opens) {
+                inQuotes = true;
+            }
+
+            if (inQuotes) {
+                String normalized = normalize(word);
+                if (!normalized.isEmpty()) {
+                    phraseWords.add(normalized);
+                }
+                if (closes) {
+                    flushPhrase(phraseWords, elements);
+                    inQuotes = false;
+                }
+            } else {
+                switch (word) {
+                    case "AND" -> elements.add(new Operator(OperatorType.AND));
+                    case "OR" -> elements.add(new Operator(OperatorType.OR));
+                    case "NOT" -> elements.add(new Operator(OperatorType.NOT));
+                    default -> {
+                        String normalized = normalize(word);
+                        if (!normalized.isEmpty()) {
+                            elements.add(new Term(normalized));
+                        }
                     }
                 }
             }
-            if (tokens.getLast().isEmpty()) {
-                tokens.remove(token);
-            }
         }
-        return tokens;
+
+        if (inQuotes) {
+            flushPhrase(phraseWords, elements);
+        }
+        return elements;
+    }
+
+    private String normalize(String word) {
+        return word.toLowerCase().replace("'", "");
+    }
+
+    private void flushPhrase(List<String> words, List<QueryElement> elements) {
+        if (words.size() == 1) {
+            elements.add(new Term(words.getFirst()));
+        } else if (words.size() > 1) {
+            elements.add(new Phrase(List.copyOf(words)));
+        }
+        words.clear();
     }
 }

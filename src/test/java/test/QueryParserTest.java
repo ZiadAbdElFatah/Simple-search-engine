@@ -1,68 +1,75 @@
 package test;
 
-import main.QueryParser;
+import main.*;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import java.util.List;
 
 public class QueryParserTest {
-
     private final QueryParser parser = new QueryParser();
 
     @Test
     public void singleTermIsLowercased() {
-        Assert.assertEquals(parser.parse("Java"), List.of("java"));
+        Assert.assertEquals(parser.parse("Java"), List.of(new Term("java")));
     }
 
     @Test
-    public void recognizesAndOperator() {
-        Assert.assertEquals(parser.parse("machine AND learning"), List.of("machine", "AND", "learning"));
+    public void recognizesOperators() {
+        Assert.assertEquals(parser.parse("machine AND learning"),
+                List.of(new Term("machine"), new Operator(OperatorType.AND), new Term("learning")));
+        Assert.assertEquals(parser.parse("cat OR dog"),
+                List.of(new Term("cat"), new Operator(OperatorType.OR), new Term("dog")));
+        Assert.assertEquals(parser.parse("java NOT beginner"),
+                List.of(new Term("java"), new Operator(OperatorType.NOT), new Term("beginner")));
     }
 
     @Test
-    public void recognizesOrOperator() {
-        Assert.assertEquals(parser.parse("cat OR dog"), List.of("cat", "OR", "dog"));
+    public void lowercaseAndIsLiteralTerm() {
+        Assert.assertEquals(parser.parse("bread and butter"),
+                List.of(new Term("bread"), new Term("and"), new Term("butter")));
     }
 
     @Test
-    public void recognizesNotOperator() {
-        Assert.assertEquals(parser.parse("java NOT beginner"), List.of("java", "NOT", "beginner"));
+    public void apostropheIsStripped() {
+        Assert.assertEquals(parser.parse("don't stop"),
+                List.of(new Term("dont"), new Term("stop")));
     }
 
     @Test
-    public void lowercaseAndIsTreatedAsLiteralTerm() {
-        Assert.assertEquals(parser.parse("bread and butter"), List.of("bread", "and", "butter"));
+    public void oneWordQuotedPhraseBecomesTerm() {
+        Assert.assertEquals(parser.parse("\"hello\""), List.of(new Term("hello")));
     }
 
     @Test
-    public void singleWordQuotedPhrase() {
-        Assert.assertEquals(parser.parse("\"hello\""), List.of("hello"));
+    public void multiWordPhraseIsNormalized() {
+        Assert.assertEquals(parser.parse("\"Machine Learning\""),
+                List.of(new Phrase(List.of("machine", "learning"))));
     }
 
     @Test
-    public void multiWordQuotedPhrasePreservesCaseInsideQuotes() {
-        Assert.assertEquals(parser.parse("\"Machine Learning\""), List.of("Machine", "Learning"));
+    public void operatorInsideQuotesIsLiteral() {
+        Assert.assertEquals(parser.parse("\"cats AND dogs\""),
+                List.of(new Phrase(List.of("cats", "and", "dogs"))));
     }
 
     @Test
-    public void quotedPhraseFollowedByOperatorAndTerm() {
-        Assert.assertEquals(
-                parser.parse("\"machine learning\" AND python"),
-                List.of("machine", "learning", "AND", "python")
-        );
+    public void phraseMixedWithOperatorAndTerm() {
+        Assert.assertEquals(parser.parse("\"machine learning\" AND python"),
+                List.of(new Phrase(List.of("machine", "learning")),
+                        new Operator(OperatorType.AND),
+                        new Term("python")));
     }
 
     @Test
-    public void operatorWordInsideQuotesIsTreatedAsLiteralTerm() {
-        Assert.assertEquals(
-                parser.parse("\"cats AND dogs\""),
-                List.of("cats", "AND", "dogs")
-        );
+    public void unclosedQuoteStillProducesPhrase() {
+        Assert.assertEquals(parser.parse("\"machine learning"),
+                List.of(new Phrase(List.of("machine", "learning"))));
     }
 
     @Test
-    public void emptyInputProducesNoTokens() {
+    public void loneQuotesAndEmptyInputProduceNothing() {
+        Assert.assertEquals(parser.parse("\" \""), List.of());
         Assert.assertEquals(parser.parse(""), List.of());
     }
 }
