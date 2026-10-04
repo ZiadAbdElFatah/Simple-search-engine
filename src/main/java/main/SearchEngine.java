@@ -19,6 +19,7 @@ public class SearchEngine {
     private final Index index = new Index();
     private final Tokenizer tokenizer = new Tokenizer();
     private final List<TextExtractor> extractors = List.of(new PdfTextExtractor(), new PlainTextExtractor());
+    private final QueryParser queryParser = new QueryParser();
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SearchEngine.class);
 
@@ -28,19 +29,45 @@ public class SearchEngine {
         index(files);
     }
 
-    /// Searches for documents that contain the given query string.
+    /// Supports AND / OR / NOT (precedence: NOT, then AND, then OR), "quoted phrases",
+    /// and implicit OR between adjacent terms. Results are ranked by TF-IDF.
     ///
-    /// @param query the query string to search for
-    /// @return a list of documents that contain the query string sorted according to TF-IDF
+    /// @throws IllegalArgumentException if the query is malformed (e.g. "java AND")
     public List<Document> search(String query) {
-        List<String> tokens = tokenizer.tokenize(query);
-        TfIdfScorer scorer = new TfIdfScorer(index, documents.size());
-        Map<Integer, Double> scores = scorer.score(tokens);
+        QueryNode tree = new QueryTreeBuilder().build(queryParser.parse(query));
+        if (tree == null) {
+            return List.of();
+        }
 
-        return scores.entrySet().stream()
-                .sorted(Map.Entry.<Integer, Double>comparingByValue().reversed())
-                .map(entry -> documents.get(entry.getKey()))
+        List<Integer> matches = new QueryEvaluator(index, documents.size()).evaluate(tree);
+
+        List<String> terms = new ArrayList<>();
+        collectPositiveTerms(tree, terms);
+        Map<Integer, Double> scores = new TfIdfScorer(index, documents.size())
+                .score(terms.stream().distinct().toList());
+
+        return matches.stream()
+                .sorted(Comparator.comparingDouble((Integer id) -> scores.getOrDefault(id, 0.0)).reversed())
+                .map(documents::get)
                 .toList();
+    }
+
+    /// Terms under NOT don't contribute to ranking: they describe what a good result lacks.
+    private void collectPositiveTerms(QueryNode node, List<String> out) {
+        switch (node) {
+            case QueryNode.TermNode t -> out.add(t.term());
+            case QueryNode.PhraseNode p -> out.addAll(p.words());
+            case QueryNode.AndNode a -> {
+                collectPositiveTerms(a.left(), out);
+                collectPositiveTerms(a.right(), out);
+            }
+            case QueryNode.OrNode o -> {
+                collectPositiveTerms(o.left(), out);
+                collectPositiveTerms(o.right(), out);
+            }
+            case QueryNode.NotNode _ -> { }
+            default -> throw new IllegalStateException("Unexpected value: " + node);
+        }
     }
 
     private List<Path> loadDirectory(Path folder) throws IOException {
