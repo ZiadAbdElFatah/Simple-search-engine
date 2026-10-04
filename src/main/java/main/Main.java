@@ -22,9 +22,12 @@ public class Main {
 
         String query = bufferedReader.readLine();
         while (query != null && !query.equals("quit")) {
-            List<Document> searchResults = searchEngine.search(query);
-            for (Document document : searchResults) {
-                System.out.println(document.toString());
+            try {
+                for (Document document : searchEngine.search(query)) {
+                    System.out.println(document);
+                }
+            } catch (IllegalArgumentException e) {
+                System.out.println("Invalid query: " + e.getMessage());
             }
             query = bufferedReader.readLine();
         }
