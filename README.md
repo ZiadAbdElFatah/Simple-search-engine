@@ -1,4 +1,4 @@
-# Simple Search Engine
+# Document Search Engine
 
 This is a text search engine I built from scratch in Java no Lucene, no existing search library, just the actual data structures and algorithms that make search engines work: an inverted index, Term Frequency(TF)-Inverse Document Frequency(IDF) ranking, a boolean query parser, and phrase search.
 
